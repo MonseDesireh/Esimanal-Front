@@ -47,7 +47,7 @@
                     ESIMANAL
                 </p> 
             </div>
-            <img 
+            <img
                 src="../../../public/image/logoesime.jpg" 
                 class="object-scale-down h-28 w-28 flex float-right"
             >
