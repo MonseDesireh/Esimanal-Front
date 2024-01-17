@@ -64,26 +64,29 @@
 
         <div 
             class="border-solid bg-white border-[4px] border-red-800 text-center mt-10 w-3/5 rounded-2xl mx-auto p-[1px]"
-            v-for="(item, index) in data" :key="index"
+            v-for="(noticia, index) in noticias" :key="index"
         >
             <div
-                :style="{'background-image': `url(${item.image})`}" 
+                :style="{'background-image': `url('../../../public/image/logoipn.png')`}" 
                 class="imagen rounded-t-xl z-0"
                 :class="(!contenido_desplegado[index]) ? 'h-20' : 'h-40'"
             ></div>
             <div class="">
-                <strong class="text-lg text-left">{{ item.titulo }}</strong>
+                <strong class="text-lg text-left">{{ noticia.titulo }}</strong>
                 <br>
-                <p class="text-justify text-sm" v-if="!contenido_desplegado[index]">{{ item.pre }}</p>
-                <p v-else>
-                    {{ item.pre + item.content }}
-                </p>
-                <i 
+                <p class="text-justify text-sm" v-if="!contenido_desplegado[index]">{{ noticia.contenido }}</p>
+                <i>{{ noticia.autor.titulo }} : {{ noticia.autor.nombre }}</i>
+                <br>
+                <i>Contacto: {{ noticia.autor.contacto }}</i>
+                <!-- <p v-else>
+                    {{ noticia.contenido }}
+                </p> -->
+                <!-- <i 
                     class="hover:underline underline-offset-1 hover:text-blue-500 text-black cursor-pointer text-right"
                     @click="contenido_desplegado[index] = !contenido_desplegado[index]"
                 >
                     {{ (!contenido_desplegado[index]) ? 'Ver más...' : 'Ver menos...' }}
-                </i>
+                </i> -->
             </div>
         </div>
     </div>
@@ -103,7 +106,8 @@ export default {
             contenido_desplegado: [],
             showCreateNewModal: false,
             titulo: '',
-            contenido: ''
+            contenido: '',
+            noticias: {}
         };
     },
     mounted() {
@@ -138,8 +142,8 @@ export default {
         async getNews() {
             const api = 'http://localhost:5000/get-news';
             const response = await axios.get(api);
-
-            console.log(response);
+            this.noticias = response.data;
+            console.log(this.noticias);
         }
     },
 }
