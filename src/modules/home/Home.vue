@@ -22,6 +22,15 @@
                         class="border-2 border-gray-500 block w-2/3 mx-auto rounded-lg"
                     ></textarea>
                     <div>
+                        Selecciona una categoria:
+                        <select class="border-2 border-black rounded-lg m-4 w-[240px]" v-model="categoria_seleccionada">
+                            <option v-for="categoria in categorias" :key="categoria" :value="categoria">{{ categoria.descripcion }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <input type="file" @change="asignarImagen" accept=".jpg, .jpeg, .png">
+                    </div>
+                    <div>
                         <div
                             class="border-2 m-4 inline-block border-green-600 bg-green-500 hover:bg-green-600 cursor-pointer rounded-lg py-2 px-4"
                             @click="createNews"
@@ -62,22 +71,33 @@
             </span>
         </div>
 
+        <!-- {{ noticias[0] }} -->
+        <!-- <img :src="noticias[0].img.ruta" alt=""> -->
+
         <div 
             class="border-solid bg-white border-[4px] border-red-800 text-center mt-10 w-3/5 rounded-2xl mx-auto p-[1px]"
             v-for="(noticia, index) in noticias" :key="index"
         >
             <div
-                :style="{'background-image': `url('../../../public/image/logoipn.png')`}" 
+                :style="{'background-image': `url('http://localhost:5000/get-image/${noticia.img.ruta}')`}"
                 class="imagen rounded-t-xl z-0"
                 :class="(!contenido_desplegado[index]) ? 'h-20' : 'h-40'"
-            ></div>
+            >
+            </div>
+            <div class="bg-slate-100">
+                <strong class="text-center p-4">
+                    <i>{{ noticia.categoria.descripcion }}</i>
+                </strong>
+            </div>
             <div class="">
                 <strong class="text-lg text-left">{{ noticia.titulo }}</strong>
                 <br>
                 <p class="text-justify text-sm" v-if="!contenido_desplegado[index]">{{ noticia.contenido }}</p>
-                <i>{{ noticia.autor.titulo }} : {{ noticia.autor.nombre }}</i>
-                <br>
-                <i>Contacto: {{ noticia.autor.contacto }}</i>
+                <p class="text-right text-sm mt-4 mr-4">
+                    <i>{{ noticia.autor.titulo }} : {{ noticia.autor.nombre }}</i>
+                    <br>
+                    <i>Contacto: {{ noticia.autor.contacto }}</i>
+                </p>
                 <!-- <p v-else>
                     {{ noticia.contenido }}
                 </p> -->
@@ -101,36 +121,38 @@ export default {
     data(){
         return {
             // Data para los datos que lleguen desde la DB
-            data: [{}, {}],
-            logotipo: '',
-            contenido_desplegado: [],
-            showCreateNewModal: false,
-            titulo: '',
             contenido: '',
-            noticias: {}
+            logotipo: '',
+            titulo: '',
+            contenido_desplegado: [],
+            categoria_seleccionada: {},
+            categorias: {},
+            noticias: {},
+            showCreateNewModal: false,
+            image: null
         };
     },
     mounted() {
-        this.asignarImagen();
         this.getNews();
+        this.getCategorias();
     },
     methods: {
-        asignarImagen() {
-            this.data[0].titulo = 'Titulo de prueba';
-            this.data[0].pre = 'Omar García Harfuch pierde -ya saben, el ponderador es veleidoso- la encuesta por la candidatura de CDMX. Reconoce la decisión, o la cuota de género, y se pliega al dictado de Morena. Clara Brugada es virtual candidata, los que se oponían al policía celebran: la izquierda se ha salvado.';
-            this.data[0].content = 'Claudia Sheinbaum invita a Omar a integrarse a los trabajos de diseño de -todavía no se puede decir con todas sus letras- la política anticrimen para todo el país. Se entiende que lo querrá de secretario de seguridad, de contrapeso a los generales, de su hombre contra la violencia. \n Qué dirán de esa invitación quienes desde el filomorenismo hoy cuestionan a García Harfuch por sus antecedentes familiares (¡?), su paso por la Policía Federal en tiempos de Peña Nieto (por supuesta carencia de exámenes de confianza, por Ayotzinapa, etc.), y porque no es de izquierda…';
-            this.data[0].image = `../../../public/image/logo_esimanal.png`;
-            this.data[1].titulo = 'Titulo de prueba';
-            this.data[1].pre = 'Omar García Harfuch pierde -ya saben, el ponderador es veleidoso- la encuesta por la candidatura de CDMX. Reconoce la decisión, o la cuota de género, y se pliega al dictado de Morena. Clara Brugada es virtual candidata, los que se oponían al policía celebran: la izquierda se ha salvado.';
-            this.data[1].content = 'Claudia Sheinbaum invita a Omar a integrarse a los trabajos de diseño de -todavía no se puede decir con todas sus letras- la política anticrimen para todo el país. Se entiende que lo querrá de secretario de seguridad, de contrapeso a los generales, de su hombre contra la violencia. \n Qué dirán de esa invitación quienes desde el filomorenismo hoy cuestionan a García Harfuch por sus antecedentes familiares (¡?), su paso por la Policía Federal en tiempos de Peña Nieto (por supuesta carencia de exámenes de confianza, por Ayotzinapa, etc.), y porque no es de izquierda…';
-            this.data[1].image = `../../../public/image/logo_esimanal.png`;
-            this.logotipo = '../../../public/image/logoipn.png';
+        asignarImagen($event) {
+            this.image = $event.target.files[0];
+            console.log(this.image);
         },
         async createNews() {
+            const formData = new FormData();
+            formData.append('photo', this.image);
+            formData.append('titulo', this.titulo);
+            formData.append('contenido',this.contenido)
+            formData.append('categoria_id', this.categoria_seleccionada.id)
+
             const api = 'http://localhost:5000/post-news';
-            const response = await axios.post(api, {
-                titulo: this.titulo,
-                contenido: this.contenido
+            const response = await axios.post(api, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             });
             
             this.getNews();
@@ -138,12 +160,18 @@ export default {
             this.titulo = '';
             this.contenido = '';
             this.showCreateNewModal = false;
+            this.categoria_seleccionada = {};
         },
         async getNews() {
             const api = 'http://localhost:5000/get-news';
             const response = await axios.get(api);
             this.noticias = response.data;
             console.log(this.noticias);
+        },
+        async getCategorias() {
+            const api = "http://localhost:5000/get-categorias";
+            const response = await axios.get(api);
+            this.categorias = response.data;
         }
     },
 }
